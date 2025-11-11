@@ -1,0 +1,74 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: seckill
+  
+  # Thymeleaf 模板引擎配置
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false  # 开发环境关闭缓存，生产环境改为 true
+
+  # 数据源配置（暂时注释，等创建数据库后再启用）
+  # datasource:
+  #   driver-class-name: com.mysql.cj.jdbc.Driver
+  #   url: jdbc:mysql://localhost:3306/seckill?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+  #   username: root
+  #   password: root
+
+  # Redis配置（暂时注释，等Redis启动后再启用）
+  # data:
+  #   redis:
+  #     host: localhost
+  #     port: 6379
+  #     password:
+  #     database: 0
+  #     timeout: 3000ms
+  #     lettuce:
+  #       pool:
+  #         max-active: 8
+  #         max-idle: 8
+  #         min-idle: 0
+  #         max-wait: -1ms
+
+# MyBatis Plus 配置（暂时注释，等创建数据库后再启用）
+# mybatis-plus:
+#   # Mapper XML 文件位置
+#   mapper-locations: classpath*:/mapper/**/*.xml
+#   # 实体类包路径
+#   type-aliases-package: com.secskill.entity
+#   configuration:
+#     # 开启驼峰命名转换
+#     map-underscore-to-camel-case: true
+#     # 日志实现
+#     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#   global-config:
+#     db-config:
+#       # 主键类型：AUTO(数据库自增)、ASSIGN_ID(雪花算法)、ASSIGN_UUID(UUID)
+#       id-type: ASSIGN_ID
+#       # 逻辑删除字段
+#       logic-delete-field: deleted
+#       # 逻辑删除值
+#       logic-delete-value: 1
+#       # 逻辑未删除值
+#       logic-not-delete-value: 0
+#       # 字段策略：IGNORED(忽略判断)、NOT_NULL(非NULL判断)、NOT_EMPTY(非空判断)
+#       insert-strategy: NOT_NULL
+#       update-strategy: NOT_NULL
+
+# 日志配置（详细配置在 logback-spring.xml 中）
+logging:
+  config: classpath:logback-spring.xml
+  level:
+    root: INFO
+    com.secskill: DEBUG
+    com.baomidou.mybatisplus: DEBUG
+    org.springframework: INFO
+    org.mybatis: DEBUG
+
