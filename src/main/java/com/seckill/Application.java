@@ -1,18 +1,17 @@
-package com.secskill;
+package com.seckill;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
 /**
  * 秒杀系统主应用类
- * 
+ *
  * @author seckill
  */
 @SpringBootApplication(exclude = {
-        DataSourceAutoConfiguration.class,  // 排除数据源自动配置
-        RedisAutoConfiguration.class          // 排除Redis自动配置（如果Redis未启动）
+        DataSourceAutoConfiguration.class  // 排除数据源自动配置
+        // RedisAutoConfiguration.class 已移除，启用Redis自动配置
 })
 public class Application {
 

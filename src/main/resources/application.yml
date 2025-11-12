@@ -22,20 +22,20 @@ spring:
   #   username: root
   #   password: root
 
-  # Redis配置（暂时注释，等Redis启动后再启用）
-  # data:
-  #   redis:
-  #     host: localhost
-  #     port: 6379
-  #     password:
-  #     database: 0
-  #     timeout: 3000ms
-  #     lettuce:
-  #       pool:
-  #         max-active: 8
-  #         max-idle: 8
-  #         min-idle: 0
-  #         max-wait: -1ms
+  # Redis配置
+  data:
+    redis:
+      host: 192.168.31.16
+      port: 6379
+      password: Pass123456788
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
 
 # MyBatis Plus 配置（暂时注释，等创建数据库后再启用）
 # mybatis-plus:

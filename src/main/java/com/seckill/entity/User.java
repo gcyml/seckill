@@ -1,11 +1,11 @@
-package com.secskill.entity;
+package com.seckill.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
  * 用户实体类示例
- * 
+ *
  * @author seckill
  */
 @Data

@@ -1,8 +1,4 @@
-package com.secskill.mapper;
-
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.secskill.entity.User;
-import org.apache.ibatis.annotations.Mapper;
+package com.seckill.mapper;
 
 /**
  * 用户 Mapper 接口

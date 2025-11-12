@@ -58,7 +58,7 @@
     </logger>
 
     <!-- 项目日志 -->
-    <logger name="com.secskill" level="DEBUG" additivity="false">
+    <logger name="com.seckill" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
         <appender-ref ref="ERROR_FILE"/>

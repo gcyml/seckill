@@ -1,4 +1,4 @@
-package com.secskill.config;
+package com.seckill.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * MyBatis Plus 配置类
  * 等创建数据库后，取消注释 application.yml 中的 mybatis-plus 配置即可启用
- * 
+ *
  * @author seckill
  */
 @Configuration
