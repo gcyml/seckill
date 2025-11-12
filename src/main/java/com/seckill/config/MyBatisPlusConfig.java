@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * @author seckill
  */
 @Configuration
-@MapperScan("com.secskill.mapper")
+@MapperScan("com.seckill.mapper")
 @ConditionalOnProperty(name = "spring.datasource.url")
 public class MyBatisPlusConfig {
 

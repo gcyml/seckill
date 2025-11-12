@@ -8,3 +8,9 @@ https://www.cnblogs.com/hefeng2014/p/17750831.html
 https://github.com/HermanCho/seckill
 认真研究乐观锁、悲观锁
 研究扩容，简单方法，就是用nginx做负载均衡，即水平扩容，而后需要redis做会话
+
+
+加入10个库存，1000个线程循环10次时，吞吐量大约是3400每秒 还是可以的。
+
+lua语言比较强大，可以执行复杂的逻辑，保证操作原子性，可以用Redis 事务（MULTI/EXEC）替代，缺点就是：不是真正的原子性（中间可能失败）
+
