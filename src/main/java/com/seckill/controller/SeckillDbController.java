@@ -20,8 +20,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class SeckillDbController {
 
     @Resource
-    @Qualifier("seckillServiceDb")
+    @Qualifier("seckillServiceDbOptimistic")
     private SeckillService seckillService;
+
 
     /**
      * 添加活动中的sku（数据库版本）
@@ -57,8 +58,8 @@ public class SeckillDbController {
         return response;
     }
 
-    /**
-     * 秒杀指定sku（数据库版本）
+     /**
+     * 秒杀指定sku（乐观锁版本）
      */
     @GetMapping("/skusecond")
     @ResponseBody
@@ -88,24 +89,35 @@ public class SeckillDbController {
         int status = 1;
 
         if (result.equals("-1")) {
-            msg = "已超出当前活动每件sku允许每人秒杀的数量 (DB)";
+            msg = "已超出当前活动每件sku允许每人秒杀的数量";
             status = 1;
         } else if (result.equals("-2")) {
-            msg = "已超出当前活动允许每人秒杀的数量 (DB)";
+            msg = "已超出当前活动允许每人秒杀的数量";
             status = 1;
         } else if (result.equals("-3")) {
-            msg = "sku不存在或秒杀数量未设置 (DB)";
+            msg = "sku不存在或秒杀数量未设置";
+            status = 1;
+        } else if (result.equals("-4")) {
+            msg = "数据被并发修改，秒杀失败 (乐观锁检测到version不匹配)";
             status = 1;
         } else if (result.equals("0")) {
-            msg = "库存数量不足，秒杀失败 (DB)";
+            msg = "库存数量不足，秒杀失败";
             status = 1;
         } else {
-            msg = "秒杀成功;秒杀编号:" + result + " (DB)";
+            msg = "秒杀成功;秒杀编号:" + result + "";
             status = 0;
         }
 
         ServerResponseUtil response = new ServerResponseUtil(status, msg, "");
         return response;
+    }
+
+    /**
+     * 首页
+     */
+    @GetMapping("/index")
+    public String index() {
+        return "seckill/index2";
     }
 }
 

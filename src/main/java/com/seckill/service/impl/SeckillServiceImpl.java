@@ -6,6 +6,7 @@ import com.seckill.util.RedisHashUtil;
 import com.seckill.util.RedisLuaUtil;
 import com.seckill.util.TimeUtil;
 import jakarta.annotation.Resource;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
+@Primary
 public class SeckillServiceImpl implements SeckillService {
 
     @Resource
@@ -61,7 +63,7 @@ public class SeckillServiceImpl implements SeckillService {
         int rand_num = ThreadLocalRandom.current().nextInt(END - START + 1) + START;
         String order_time = TimeUtil.getTimeNowStr()+"-"+rand_num;
 
-        List<String> keyList = new ArrayList();
+        List<String> keyList = new ArrayList<>();
         keyList.add(userId);
         keyList.add(String.valueOf(buyNum));
 

@@ -28,11 +28,11 @@ local second_log_hash = 'sec_'..actId..'_log_hash'
 --当前sku是否还有库存
 local skuAmountStr = redis.call('hget',sku_amount_hash,skuId)
 if skuAmountStr == false then
-        redis.log(redis.LOG_NOTICE,'skuAmountStr is nil ')
+--         redis.log(redis.LOG_NOTICE,'skuAmountStr is nil ')
         return '-3'
 end;
 local skuAmount = tonumber(skuAmountStr)
- redis.log(redis.LOG_NOTICE,'sku:'..skuId..';skuAmount:'..skuAmount)
+--  redis.log(redis.LOG_NOTICE,'sku:'..skuId..';skuAmount:'..skuAmount)
  if skuAmount <= 0 then
    return '0'
 end
@@ -44,10 +44,10 @@ local userActKey = userId..'_'..actId
    local userActNumInt = 0
    local userActNum = redis.call('hget',user_act_hash,userActKey)
    if userActNum == false then
-      redis.log(redis.LOG_NOTICE,'userActKey:'..userActKey..' is nil')
+--       redis.log(redis.LOG_NOTICE,'userActKey:'..userActKey..' is nil')
       userActNumInt = buyNum
    else
-      redis.log(redis.LOG_NOTICE,userActKey..':userActNum:'..userActNum..';perActLim:'..perActLim)
+--       redis.log(redis.LOG_NOTICE,userActKey..':userActNum:'..userActNum..';perActLim:'..perActLim)
       local curUserActNumInt = tonumber(userActNum)
       userActNumInt =  curUserActNumInt+buyNum
    end
@@ -57,21 +57,21 @@ local userActKey = userId..'_'..actId
  end
 
 local goodsUserKey = userId..'_'..skuId
-redis.log(redis.LOG_NOTICE,'perSkuLim:'..perSkuLim)
+-- redis.log(redis.LOG_NOTICE,'perSkuLim:'..perSkuLim)
 --当前用户已购买此sku多少件，用于SKU级限购校验
 if perSkuLim > 0 then
    local goodsUserNum = redis.call('hget',user_sku_hash,goodsUserKey)
    local goodsUserNumint = 0
    if goodsUserNum == false then
-      redis.log(redis.LOG_NOTICE,'goodsUserNum is nil')
+--       redis.log(redis.LOG_NOTICE,'goodsUserNum is nil')
       goodsUserNumint = buyNum
    else
-      redis.log(redis.LOG_NOTICE,'goodsUserNum:'..goodsUserNum..';perSkuLim:'..perSkuLim)
+--       redis.log(redis.LOG_NOTICE,'goodsUserNum:'..goodsUserNum..';perSkuLim:'..perSkuLim)
       local curSkuUserNumint = tonumber(goodsUserNum)
       goodsUserNumint =  curSkuUserNumint+buyNum
    end
 
-   redis.log(redis.LOG_NOTICE,'------goodsUserNumint:'..goodsUserNumint..';perSkuLim:'..perSkuLim)
+--    redis.log(redis.LOG_NOTICE,'------goodsUserNumint:'..goodsUserNumint..';perSkuLim:'..perSkuLim)
    if goodsUserNumint > perSkuLim then
        return '-1'
    end
@@ -82,7 +82,7 @@ if skuAmount >= buyNum then
      local decrNum = 0-buyNum
      --  Hincrby 命令用于为哈希表中的字段值加上指定增量值。
      redis.call('hincrby',sku_amount_hash,skuId,decrNum)
-     redis.log(redis.LOG_NOTICE,'second success:'..skuId..'-'..buyNum)
+--      redis.log(redis.LOG_NOTICE,'second success:'..skuId..'-'..buyNum)
 
      if perSkuLim > 0 then
          -- 给用户对当前SKU的已购数量哈希表增加购买数量

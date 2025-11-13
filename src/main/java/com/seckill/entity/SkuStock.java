@@ -28,5 +28,10 @@ public class SkuStock extends BaseEntity {
      * 库存数量
      */
     private Integer amount;
+
+    /**
+     * 版本号（乐观锁）
+     */
+    private Integer version;
 }
 

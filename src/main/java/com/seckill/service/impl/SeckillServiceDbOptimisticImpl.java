@@ -15,16 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * 数据库版本的秒杀服务实现（用于性能对比测试）
+ * 数据库版本的秒杀服务实现（乐观锁版本）
  * 实现与Redis Lua脚本相同的限购逻辑：
  * - SKU级限购：每个用户购买当前sku的个数限制
  * - 活动级限购：每个用户购买当前活动内所有sku的总数量限制
- * - 无乐观锁，直接 UPDATE
+ * - 使用乐观锁，检测并发修改
  *
  * @author seckill
  */
-@Service("seckillServiceDb")
-public class SeckillServiceDbImpl implements SeckillService {
+@Service("seckillServiceDbOptimistic")
+public class SeckillServiceDbOptimisticImpl implements SeckillService {
 
     @Resource
     private SkuStockMapper skuStockMapper;
@@ -65,6 +65,7 @@ public class SeckillServiceDbImpl implements SeckillService {
                 skuStock.setActId(actId);
                 skuStock.setSkuId(skuId);
                 skuStock.setAmount(amount);
+                skuStock.setVersion(0); // 初始版本号为0
                 skuStockMapper.insert(skuStock);
             }
             return true;
@@ -75,8 +76,14 @@ public class SeckillServiceDbImpl implements SeckillService {
     }
 
     /**
-     * 秒杀功能（数据库版本 - 带限购逻辑）
+     * 秒杀功能（数据库版本 - 乐观锁版本）
      * 实现与Redis Lua脚本相同的限购逻辑
+     *
+     * 乐观锁原理：
+     * 1. 查询时获取 version
+     * 2. UPDATE 时带上 version 条件：WHERE version = #{version}
+     * 3. 同时更新 version：SET version = version + 1
+     * 4. 如果 version 不匹配，UPDATE 返回 0（更新失败，说明数据被其他线程修改）
      *
      * @param actId 活动id
      * @param userId 用户id
@@ -89,6 +96,7 @@ public class SeckillServiceDbImpl implements SeckillService {
      *         - '-2': 已超出当前活动允许每人秒杀的数量
      *         - '-1': 已超出当前活动每件sku允许每人秒杀的数量
      *         - '0': 库存数量不足，秒杀失败
+     *         - '-4': 数据被并发修改（乐观锁检测到version不匹配）
      *         - orderKey: 秒杀成功，返回订单唯一标识
      */
     @Override
@@ -96,7 +104,7 @@ public class SeckillServiceDbImpl implements SeckillService {
     public String skuSecond(String actId, String userId, int buyNum, String skuId,
                            int perSkuLim, int perActLim) {
         try {
-            // 1. 检查SKU是否存在且有库存
+            // 1. 检查SKU是否存在且有库存（同时获取version）
             LambdaQueryWrapper<SkuStock> stockWrapper = new LambdaQueryWrapper<>();
             stockWrapper.eq(SkuStock::getActId, actId)
                     .eq(SkuStock::getSkuId, skuId)
@@ -108,7 +116,8 @@ public class SeckillServiceDbImpl implements SeckillService {
             }
 
             int skuAmount = skuStock.getAmount();
-            // 这里查到的值可能和下面的值会不一致
+            int version = skuStock.getVersion(); // 获取版本号
+
             if (skuAmount <= 0) {
                 return "0"; // 库存不足
             }
@@ -153,10 +162,23 @@ public class SeckillServiceDbImpl implements SeckillService {
                 return "0"; // 库存不足
             }
 
-            // 5. 扣减库存（直接 UPDATE，无乐观锁）
-            int updateCount = skuStockMapper.decreaseStock(actId, skuId, buyNum);
+            // 5. 扣减库存（乐观锁版本：带version检查）
+            int updateCount = skuStockMapper.decreaseStockWithVersion(actId, skuId, buyNum, version);
             if (updateCount == 0) {
-                return "0"; // 库存不足或不存在（并发情况下可能发生）
+                // 并发检测：version 不匹配，说明数据被其他线程修改
+                // 重新查询一次，确认是库存不足还是并发修改
+                SkuStock currentStock = skuStockMapper.selectOne(stockWrapper);
+                if (currentStock != null && currentStock.getVersion() != version) {
+                    // version 变了，说明数据被其他线程修改（并发冲突）
+                    System.out.println("[并发检测] ✅ 检测到并发修改: 原version=" + version +
+                                     ", 当前version=" + currentStock.getVersion() +
+                                     ", userId=" + userId + ", skuId=" + skuId);
+                    // 可以返回特殊错误码，或者重试
+                    return "-4"; // 数据被并发修改，秒杀失败
+                } else {
+                    // version 没变，说明是库存不足
+                    return "0"; // 库存不足
+                }
             }
 
             // 6. 更新SKU级限购记录

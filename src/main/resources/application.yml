@@ -6,7 +6,7 @@ server:
 spring:
   application:
     name: seckill
-  
+
   # Thymeleaf 模板引擎配置
   thymeleaf:
     prefix: classpath:/templates/
@@ -15,12 +15,24 @@ spring:
     encoding: UTF-8
     cache: false  # 开发环境关闭缓存，生产环境改为 true
 
-  # 数据源配置（暂时注释，等创建数据库后再启用）
-  # datasource:
-  #   driver-class-name: com.mysql.cj.jdbc.Driver
-  #   url: jdbc:mysql://localhost:3306/seckill?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-  #   username: root
-  #   password: root
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.31.16:3306/seckill?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: seckill
+    password: Pass@123456788
+    hikari:
+      # 连接池配置（优化后）
+      minimum-idle: 20
+      maximum-pool-size: 100
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      # 性能优化配置
+      leak-detection-threshold: 60000
+      # 连接池名称
+      pool-name: SeckillHikariPool
 
   # Redis配置
   data:
@@ -32,35 +44,35 @@ spring:
       timeout: 3000ms
       lettuce:
         pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
+          max-active: 50
+          max-idle: 20
+          min-idle: 10
           max-wait: -1ms
 
-# MyBatis Plus 配置（暂时注释，等创建数据库后再启用）
-# mybatis-plus:
-#   # Mapper XML 文件位置
-#   mapper-locations: classpath*:/mapper/**/*.xml
-#   # 实体类包路径
-#   type-aliases-package: com.secskill.entity
-#   configuration:
-#     # 开启驼峰命名转换
-#     map-underscore-to-camel-case: true
-#     # 日志实现
-#     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-#   global-config:
-#     db-config:
-#       # 主键类型：AUTO(数据库自增)、ASSIGN_ID(雪花算法)、ASSIGN_UUID(UUID)
-#       id-type: ASSIGN_ID
-#       # 逻辑删除字段
-#       logic-delete-field: deleted
-#       # 逻辑删除值
-#       logic-delete-value: 1
-#       # 逻辑未删除值
-#       logic-not-delete-value: 0
-#       # 字段策略：IGNORED(忽略判断)、NOT_NULL(非NULL判断)、NOT_EMPTY(非空判断)
-#       insert-strategy: NOT_NULL
-#       update-strategy: NOT_NULL
+# MyBatis Plus 配置
+mybatis-plus:
+  # Mapper XML 文件位置
+  mapper-locations: classpath*:/mapper/**/*.xml
+  # 实体类包路径
+  type-aliases-package: com.seckill.entity
+  configuration:
+    # 开启驼峰命名转换
+    map-underscore-to-camel-case: true
+    # 日志实现
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      # 主键类型：AUTO(数据库自增)、ASSIGN_ID(雪花算法)、ASSIGN_UUID(UUID)
+      id-type: ASSIGN_ID
+      # 逻辑删除字段
+      logic-delete-field: deleted
+      # 逻辑删除值
+      logic-delete-value: 1
+      # 逻辑未删除值
+      logic-not-delete-value: 0
+      # 字段策略：IGNORED(忽略判断)、NOT_NULL(非NULL判断)、NOT_EMPTY(非空判断)
+      insert-strategy: NOT_NULL
+      update-strategy: NOT_NULL
 
 # 日志配置（详细配置在 logback-spring.xml 中）
 logging:
