@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS `sku_stock` (
   `act_id` VARCHAR(64) NOT NULL COMMENT '活动ID',
   `sku_id` VARCHAR(64) NOT NULL COMMENT 'SKU ID',
   `amount` INT NOT NULL DEFAULT 0 COMMENT '库存数量',
-  `version` INT NOT NULL DEFAULT 0 COMMENT '版本号（乐观锁）',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `deleted` TINYINT DEFAULT 0 COMMENT '逻辑删除（0-未删除，1-已删除）',
@@ -16,9 +15,6 @@ CREATE TABLE IF NOT EXISTS `sku_stock` (
   KEY `idx_update_query` (`act_id`, `sku_id`, `deleted`, `amount`),
   KEY `idx_act_id` (`act_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='SKU库存表';
-
--- 如果表已存在，添加version字段（执行此SQL）
--- ALTER TABLE `sku_stock` ADD COLUMN `version` INT NOT NULL DEFAULT 0 COMMENT '版本号（乐观锁）' AFTER `amount`;
 
 -- 2. 用户SKU购买记录表（用于限购检查）
 CREATE TABLE IF NOT EXISTS `user_sku_order` (

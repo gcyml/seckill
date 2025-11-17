@@ -76,8 +76,17 @@ public class SeckillServiceImpl implements SeckillService {
         keyList.add(order_time);
 
         String result = redisLuaUtil.runLuaScript("second.lua",keyList);
-        System.out.println("------------------lua result:"+result);
+//        System.out.println("------------------lua result:"+result);
 
         return result;
+    }
+
+    /**
+     * 处理来自 MQ 的秒杀订单
+     * Redis 版本不支持此方法，应该使用数据库版本的服务
+     */
+    @Override
+    public String processSeckillOrderFromMQ(String actId, String userId, int buyNum, String skuId, int perSkuLim, int perActLim) {
+        throw new UnsupportedOperationException("Redis 版本不支持此方法，请使用数据库版本的服务");
     }
 }

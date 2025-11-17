@@ -1,8 +1,11 @@
 package com.seckill.controller;
 
+import com.seckill.mq.MQSender;
+import com.seckill.mq.SeckillMessage;
 import com.seckill.service.SeckillService;
 import com.seckill.util.ServerResponseUtil;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +23,13 @@ public class SecskillController {
 
     @Resource
     private SeckillService seckillService;
+
+    @Resource
+    @Qualifier("seckillServiceDbOptimistic")
+    private SeckillService seckillDbService;
+
+    @Resource
+    private MQSender sender;
 
     /**
      * 首页
@@ -110,6 +120,19 @@ public class SecskillController {
         } else {
             msg = "秒杀成功;秒杀编号:"+result;
             status = 0;
+        }
+
+        if (status == 0) {
+            //压入消息队列
+            //入队
+            SeckillMessage sm = new SeckillMessage();
+            sm.setUserId(userId);
+            sm.setActId(actId);
+            sm.setSkuId(skuId);
+            sm.setBuyNum(buyNum);
+            sm.setPerSkuLim(perSkuLim);
+            sm.setPerActLim(perActLim);
+            sender.sendSeckillMessage(sm);
         }
 
         ServerResponseUtil response = new ServerResponseUtil(status,msg,"");

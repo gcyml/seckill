@@ -9,6 +9,9 @@ import com.seckill.mapper.*;
 import com.seckill.service.SeckillService;
 import com.seckill.util.TimeUtil;
 import jakarta.annotation.Resource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +28,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 @Service("seckillServiceDbOptimistic")
 public class SeckillServiceDbOptimisticImpl implements SeckillService {
+
+    private static Logger log = LoggerFactory.getLogger(SeckillServiceDbOptimisticImpl.class);
 
     @Resource
     private SkuStockMapper skuStockMapper;
@@ -170,7 +175,7 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
                 SkuStock currentStock = skuStockMapper.selectOne(stockWrapper);
                 if (currentStock != null && currentStock.getVersion() != version) {
                     // version 变了，说明数据被其他线程修改（并发冲突）
-                    System.out.println("[并发检测] ✅ 检测到并发修改: 原version=" + version +
+                    log.info("[并发检测] ✅ 检测到并发修改: 原version=" + version +
                                      ", 当前version=" + currentStock.getVersion() +
                                      ", userId=" + userId + ", skuId=" + skuId);
                     // 可以返回特殊错误码，或者重试
@@ -247,6 +252,113 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("秒杀失败", e);
+        }
+    }
+
+    /**
+     * 处理来自 MQ 的秒杀订单（跳过限购检查）
+     * Redis 已经完成了限购检查和预扣减，这里只执行数据库操作
+     * 
+     * @param actId 活动id
+     * @param userId 用户id
+     * @param buyNum 购买数量
+     * @param skuId sku的id
+     * @param perSkuLim SKU级限购（用于更新限购记录，不检查）
+     * @param perActLim 活动级限购（用于更新限购记录，不检查）
+     * @return 订单唯一标识，失败返回 null
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String processSeckillOrderFromMQ(String actId, String userId, int buyNum, String skuId,
+                                            int perSkuLim, int perActLim) {
+        try {
+            // 1. 查询 SKU 库存信息（获取 version 用于乐观锁）
+            LambdaQueryWrapper<SkuStock> stockWrapper = new LambdaQueryWrapper<>();
+            stockWrapper.eq(SkuStock::getActId, actId)
+                    .eq(SkuStock::getSkuId, skuId)
+                    .eq(SkuStock::getDeleted, 0);
+            SkuStock skuStock = skuStockMapper.selectOne(stockWrapper);
+
+            if (skuStock == null) {
+                return null; // SKU不存在
+            }
+
+            int version = skuStock.getVersion();
+
+            // 2. 扣减库存（乐观锁版本：带version检查）
+            // 注意：这里不检查库存是否足够，因为 Redis 已经预扣减了
+            int updateCount = skuStockMapper.decreaseStockWithVersion(actId, skuId, buyNum, version);
+            if (updateCount == 0) {
+                // 库存扣减失败（可能是并发冲突或库存不足）
+                return null;
+            }
+
+            // 3. 更新SKU级限购记录（如果有限购配置）
+            if (perSkuLim > 0) {
+                LambdaQueryWrapper<UserSkuOrder> skuWrapper = new LambdaQueryWrapper<>();
+                skuWrapper.eq(UserSkuOrder::getActId, actId)
+                        .eq(UserSkuOrder::getUserId, userId)
+                        .eq(UserSkuOrder::getSkuId, skuId)
+                        .eq(UserSkuOrder::getDeleted, 0);
+                UserSkuOrder userSkuOrder = userSkuOrderMapper.selectOne(skuWrapper);
+
+                if (userSkuOrder != null) {
+                    // 更新已存在的记录
+                    userSkuOrder.setBuyNum(userSkuOrder.getBuyNum() + buyNum);
+                    userSkuOrderMapper.updateById(userSkuOrder);
+                } else {
+                    // 创建新记录
+                    UserSkuOrder newUserSkuOrder = new UserSkuOrder();
+                    newUserSkuOrder.setActId(actId);
+                    newUserSkuOrder.setUserId(userId);
+                    newUserSkuOrder.setSkuId(skuId);
+                    newUserSkuOrder.setBuyNum(buyNum);
+                    userSkuOrderMapper.insert(newUserSkuOrder);
+                }
+            }
+
+            // 4. 更新活动级限购记录（如果有限购配置）
+            if (perActLim > 0) {
+                LambdaQueryWrapper<UserActOrder> actWrapper = new LambdaQueryWrapper<>();
+                actWrapper.eq(UserActOrder::getActId, actId)
+                        .eq(UserActOrder::getUserId, userId)
+                        .eq(UserActOrder::getDeleted, 0);
+                UserActOrder userActOrder = userActOrderMapper.selectOne(actWrapper);
+
+                if (userActOrder != null) {
+                    // 更新已存在的记录
+                    userActOrder.setTotalBuyNum(userActOrder.getTotalBuyNum() + buyNum);
+                    userActOrderMapper.updateById(userActOrder);
+                } else {
+                    // 创建新记录
+                    UserActOrder newUserActOrder = new UserActOrder();
+                    newUserActOrder.setActId(actId);
+                    newUserActOrder.setUserId(userId);
+                    newUserActOrder.setTotalBuyNum(buyNum);
+                    userActOrderMapper.insert(newUserActOrder);
+                }
+            }
+
+            // 5. 创建订单
+            int randNum = ThreadLocalRandom.current().nextInt(100000, 900001);
+            String orderTime = TimeUtil.getTimeNowStr() + "-" + randNum;
+            String orderKey = userId + "_" + skuId + "_" + buyNum + "_" + orderTime;
+
+            SeckillOrder order = new SeckillOrder();
+            order.setOrderKey(orderKey);
+            order.setActId(actId);
+            order.setUserId(userId);
+            order.setSkuId(skuId);
+            order.setBuyNum(buyNum);
+            order.setOrderTime(orderTime);
+            order.setStatus(1);
+            seckillOrderMapper.insert(order);
+
+            return orderKey;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("处理秒杀订单失败", e);
         }
     }
 }
