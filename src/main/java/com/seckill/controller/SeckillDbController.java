@@ -58,6 +58,20 @@ public class SeckillDbController {
         return response;
     }
 
+    @GetMapping("/clearUserBuyAmount")
+    @ResponseBody
+    public Object clearUserBuyAmount(String actId, String skuId) {
+        if (actId.equals("")) {
+            return new ServerResponseUtil(1,"活动id不可为空","");
+        }
+        if (skuId.equals("")) {
+            return new ServerResponseUtil(1,"sku id不可为空","");
+        }
+        seckillService.clearUserBuyAmount(actId, skuId);
+        return ServerResponseUtil.success("清除用户购买数量成功");
+    }
+
+
      /**
      * 秒杀指定sku（乐观锁版本）
      */

@@ -4,6 +4,9 @@ import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Service
 public class RedisHashUtil {
@@ -41,6 +44,12 @@ public class RedisHashUtil {
         Object value=redisTemplate.opsForHash().get(hashName, hashkey);
 
         return value;
+    }
+
+    //清空一个hash
+    //参数:hash名字
+    public void clearHash(String hashName) {
+        redisTemplate.delete(hashName);
     }
 
 }

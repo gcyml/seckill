@@ -1,7 +1,13 @@
 package com.seckill.mq;
 
 import com.seckill.service.SeckillService;
+import com.seckill.util.RedisLuaUtil;
+
 import jakarta.annotation.Resource;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -23,9 +29,17 @@ public class MQReceiver {
     @Qualifier("seckillServiceDbOptimistic")
     private SeckillService seckillService;
 
+    @Resource
+    private RedisLuaUtil redisLuaUtil;
+
     /**
      * 秒杀业务消息接收
      * 预扣减已在 Redis 中完成，这里直接调用数据库服务方法完成数据库操作
+     * 
+     * 一致性处理：
+     * 1. Redis 已经预扣减了库存和限购记录
+     * 2. 执行数据库操作（扣减库存、更新限购记录、创建订单）
+     * 3. 如果数据库操作失败，回滚 Redis 预扣减的库存和限购记录
      *
      * @param sm 秒杀消息对象
      */
@@ -51,7 +65,8 @@ public class MQReceiver {
             if (orderKey == null) {
                 log.error("数据库操作失败: userId={}, actId={}, skuId={}, buyNum={}",
                         sm.getUserId(), sm.getActId(), sm.getSkuId(), sm.getBuyNum());
-                // TODO: 这里应该回滚 Redis 预扣减的库存
+                // 回滚 Redis 预扣减的库存和限购记录
+                rollbackRedis(sm);
             } else {
                 log.info("数据库操作成功: orderKey={}, userId={}, actId={}, skuId={}, buyNum={}",
                         orderKey, sm.getUserId(), sm.getActId(), sm.getSkuId(), sm.getBuyNum());
@@ -61,8 +76,45 @@ public class MQReceiver {
             log.error("处理秒杀消息失败: userId={}, actId={}, skuId={}, buyNum={}, error={}",
                     sm.getUserId(), sm.getActId(), sm.getSkuId(), sm.getBuyNum(),
                     e.getMessage(), e);
-            // TODO: 这里应该回滚 Redis 预扣减的库存
-            throw new RuntimeException("处理秒杀消息失败", e);
+            
+            // 回滚 Redis 预扣减的库存和限购记录
+            rollbackRedis(sm);
+            
+            // 注意：这里不重新抛出异常，避免消息重复消费
+            // 如果希望消息重试，可以重新抛出异常
+            // throw new RuntimeException("处理秒杀消息失败", e);
+        }
+    }
+
+    /**
+     * 回滚 Redis 预扣减的库存和限购记录
+     * 统一使用 Lua 脚本实现原子性回滚
+     * 
+     * @param sm 秒杀消息对象
+     */
+    private void rollbackRedis(SeckillMessage sm) {
+        try {
+            List<String> keyList = new ArrayList<>();
+            keyList.add(sm.getUserId());           // KEYS[1]
+            keyList.add(String.valueOf(sm.getBuyNum()));  // KEYS[2]
+            keyList.add(sm.getSkuId());            // KEYS[3]
+            keyList.add(String.valueOf(sm.getPerSkuLim())); // KEYS[4]
+            keyList.add(sm.getActId());            // KEYS[5]
+            keyList.add(String.valueOf(sm.getPerActLim())); // KEYS[6]
+            
+            String result = redisLuaUtil.runLuaScript("rollback.lua", keyList);
+            
+            if ("1".equals(result)) {
+                log.info("Redis回滚成功: userId={}, actId={}, skuId={}, buyNum={}",
+                        sm.getUserId(), sm.getActId(), sm.getSkuId(), sm.getBuyNum());
+            } else {
+                log.error("Redis回滚失败: userId={}, actId={}, skuId={}, buyNum={}",
+                        sm.getUserId(), sm.getActId(), sm.getSkuId(), sm.getBuyNum());
+            }
+        } catch (Exception rollbackException) {
+            log.error("Redis回滚操作异常: userId={}, actId={}, skuId={}, buyNum={}, error={}",
+                    sm.getUserId(), sm.getActId(), sm.getSkuId(), sm.getBuyNum(),
+                    rollbackException.getMessage(), rollbackException);
         }
     }
 }

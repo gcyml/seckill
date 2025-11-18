@@ -7,6 +7,7 @@ import com.seckill.entity.UserActOrder;
 import com.seckill.entity.UserSkuOrder;
 import com.seckill.mapper.*;
 import com.seckill.service.SeckillService;
+import com.seckill.util.RedisHashUtil;
 import com.seckill.util.TimeUtil;
 import jakarta.annotation.Resource;
 
@@ -43,6 +44,10 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
     @Resource
     private UserActOrderMapper userActOrderMapper;
 
+    @Resource
+    private RedisHashUtil redisHashUtil;
+
+
     /**
      * 添加一个秒杀活动的sku
      * @param actId 活动id
@@ -73,7 +78,15 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
                 skuStock.setVersion(0); // 初始版本号为0
                 skuStockMapper.insert(skuStock);
             }
-            return true;
+            // 库存写入缓存
+            String nameAmount = "sec_"+actId+"_sku_amount_hash";
+            boolean isSuccAmount = redisHashUtil.setHashValue(nameAmount,skuId,amount);
+    
+            if (isSuccAmount) {
+                return true;
+            } else {
+                return false;
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -360,6 +373,24 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
             e.printStackTrace();
             throw new RuntimeException("处理秒杀订单失败", e);
         }
+    }
+
+    @Override
+    public void clearUserBuyAmount(String actId, String skuId) {
+        String name = "sec_"+actId+"_u_sku_hash";
+        redisHashUtil.clearHash(name);
+        name = "sec_"+actId+"_u_act_hash";
+        redisHashUtil.clearHash(name);
+        // 清空数据库中的数据
+        LambdaQueryWrapper<UserSkuOrder> skuWrapper = new LambdaQueryWrapper<>();
+        skuWrapper.eq(UserSkuOrder::getActId, actId)
+                .eq(UserSkuOrder::getSkuId, skuId)
+                .eq(UserSkuOrder::getDeleted, 0);
+        userSkuOrderMapper.delete(skuWrapper);
+        LambdaQueryWrapper<UserActOrder> actWrapper = new LambdaQueryWrapper<>();
+        actWrapper.eq(UserActOrder::getActId, actId)
+                .eq(UserActOrder::getDeleted, 0);
+        userActOrderMapper.delete(actWrapper);
     }
 }
 

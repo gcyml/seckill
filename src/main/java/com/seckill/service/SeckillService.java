@@ -18,4 +18,9 @@ public interface SeckillService {
      * @return 订单唯一标识，失败返回 null
      */
     public String processSeckillOrderFromMQ(String actId, String userId, int buyNum, String skuId, int perSkuLim, int perActLim);
+
+    /**
+     * 清除用户购买数量
+     */
+    public void clearUserBuyAmount(String actId, String skuId);
 }

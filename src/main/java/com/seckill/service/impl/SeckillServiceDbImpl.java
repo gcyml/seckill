@@ -332,5 +332,11 @@ public class SeckillServiceDbImpl implements SeckillService {
             throw new RuntimeException("处理秒杀订单失败", e);
         }
     }
+
+    @Override
+    public void clearUserBuyAmount(String actId, String skuId) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'clearUserBuyAmount'");
+    }
 }
 

@@ -89,4 +89,12 @@ public class SeckillServiceImpl implements SeckillService {
     public String processSeckillOrderFromMQ(String actId, String userId, int buyNum, String skuId, int perSkuLim, int perActLim) {
         throw new UnsupportedOperationException("Redis 版本不支持此方法，请使用数据库版本的服务");
     }
+
+    @Override
+    public void clearUserBuyAmount(String actId, String skuId) {
+        String name = "sec_"+actId+"_u_sku_hash";
+        redisHashUtil.clearHash(name);
+        name = "sec_"+actId+"_u_act_hash";
+        redisHashUtil.clearHash(name);
+    }
 }

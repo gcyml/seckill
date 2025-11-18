@@ -4,8 +4,10 @@
 https://www.cnblogs.com/architectforest/p/13094795.html
 https://www.cnblogs.com/javastack/p/15740523.html
 https://www.cnblogs.com/hefeng2014/p/17750831.html
+https://cloud.tencent.com/developer/article/2540700
 还有研究扩容
 https://github.com/HermanCho/seckill
+
 认真研究乐观锁、悲观锁
 研究扩容，简单方法，就是用nginx做负载均衡，即水平扩容，而后需要redis做会话
 

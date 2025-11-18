@@ -39,6 +39,19 @@ public class SecskillController {
         return "seckill/index";
     }
 
+    @GetMapping("/clearUserBuyAmount")
+    @ResponseBody
+    public Object clearUserBuyAmount(String actId, String skuId) {
+        if (actId.equals("")) {
+            return new ServerResponseUtil(1,"活动id不可为空","");
+        }
+        if (skuId.equals("")) {
+            return new ServerResponseUtil(1,"sku id不可为空","");
+        }
+        seckillService.clearUserBuyAmount(actId, skuId);
+        return ServerResponseUtil.success("清除用户购买数量成功");
+    }
+
 
     //添加活动中的sku,
     //参数:活动id,sku的id,sku的库存数量，当前sku针对单个用户的购买数量限制
