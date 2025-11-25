@@ -15,11 +15,6 @@ import lombok.EqualsAndHashCode;
 public class UserSkuOrder extends BaseEntity {
 
     /**
-     * 活动ID
-     */
-    private String actId;
-
-    /**
      * 用户ID
      */
     private String userId;

@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS `sku_stock` (
 -- 2. 用户SKU购买记录表（用于限购检查）
 CREATE TABLE IF NOT EXISTS `user_sku_order` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `act_id` VARCHAR(64) NOT NULL COMMENT '活动ID',
   `user_id` VARCHAR(64) NOT NULL COMMENT '用户ID',
   `sku_id` VARCHAR(64) NOT NULL COMMENT 'SKU ID',
   `buy_num` INT NOT NULL DEFAULT 0 COMMENT '购买数量',
@@ -27,8 +26,8 @@ CREATE TABLE IF NOT EXISTS `user_sku_order` (
   `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `deleted` TINYINT DEFAULT 0 COMMENT '逻辑删除（0-未删除，1-已删除）',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_act_user_sku` (`act_id`, `user_id`, `sku_id`, `deleted`),
-  KEY `idx_act_user` (`act_id`, `user_id`)
+  UNIQUE KEY `uk_act_user_sku` (`user_id`, `sku_id`, `deleted`),
+  KEY `idx_act_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户SKU购买记录表';
 
 -- 3. 用户活动购买记录表（用于活动总限购检查）

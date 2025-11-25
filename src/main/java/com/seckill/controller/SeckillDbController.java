@@ -60,7 +60,8 @@ public class SeckillDbController {
 
     @GetMapping("/clearUserBuyAmount")
     @ResponseBody
-    public Object clearUserBuyAmount(String actId, String skuId) {
+    public Object clearUserBuyAmount(@RequestParam(value="actid",required = true,defaultValue = "") String actId,
+                                     @RequestParam(value="skuid",required = true,defaultValue = "") String skuId) {
         if (actId.equals("")) {
             return new ServerResponseUtil(1,"活动id不可为空","");
         }

@@ -47,8 +47,7 @@
            $.ajax({
                cache: true,
                type: "GET",
-               // url: "/seckill/skuadd?"+url_param,
-               url: "/seckill-db/skuadd?"+url_param,
+               url: "/seckill-all/skuadd?"+url_param,
                data:{},
                dataType: "json",
                async: true,
@@ -71,7 +70,7 @@
            $.ajax({
                cache: true,
                type: "GET",
-               url: "/seckill-db/clearUserBuyAmount?"+url_param,
+               url: "/seckill-all/clearUserBuyAmount?"+url_param,
                data: {},
                dataType: "json",
                success: function (data) {

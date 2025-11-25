@@ -81,7 +81,7 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
             // 库存写入缓存
             String nameAmount = "sec_"+actId+"_sku_amount_hash";
             boolean isSuccAmount = redisHashUtil.setHashValue(nameAmount,skuId,amount);
-    
+
             if (isSuccAmount) {
                 return true;
             } else {
@@ -160,8 +160,7 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
             // 3. 检查SKU级限购（perSkuLim > 0 时检查）
             if (perSkuLim > 0) {
                 LambdaQueryWrapper<UserSkuOrder> skuWrapper = new LambdaQueryWrapper<>();
-                skuWrapper.eq(UserSkuOrder::getActId, actId)
-                        .eq(UserSkuOrder::getUserId, userId)
+                skuWrapper.eq(UserSkuOrder::getUserId, userId)
                         .eq(UserSkuOrder::getSkuId, skuId)
                         .eq(UserSkuOrder::getDeleted, 0);
                 UserSkuOrder userSkuOrder = userSkuOrderMapper.selectOne(skuWrapper);
@@ -202,8 +201,7 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
             // 6. 更新SKU级限购记录
             if (perSkuLim > 0) {
                 LambdaQueryWrapper<UserSkuOrder> skuWrapper = new LambdaQueryWrapper<>();
-                skuWrapper.eq(UserSkuOrder::getActId, actId)
-                        .eq(UserSkuOrder::getUserId, userId)
+                skuWrapper.eq(UserSkuOrder::getUserId, userId)
                         .eq(UserSkuOrder::getSkuId, skuId)
                         .eq(UserSkuOrder::getDeleted, 0);
                 UserSkuOrder userSkuOrder = userSkuOrderMapper.selectOne(skuWrapper);
@@ -215,7 +213,6 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
                 } else {
                     // 创建新记录
                     UserSkuOrder newUserSkuOrder = new UserSkuOrder();
-                    newUserSkuOrder.setActId(actId);
                     newUserSkuOrder.setUserId(userId);
                     newUserSkuOrder.setSkuId(skuId);
                     newUserSkuOrder.setBuyNum(buyNum);
@@ -271,7 +268,7 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
     /**
      * 处理来自 MQ 的秒杀订单（跳过限购检查）
      * Redis 已经完成了限购检查和预扣减，这里只执行数据库操作
-     * 
+     *
      * @param actId 活动id
      * @param userId 用户id
      * @param buyNum 购买数量
@@ -309,8 +306,7 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
             // 3. 更新SKU级限购记录（如果有限购配置）
             if (perSkuLim > 0) {
                 LambdaQueryWrapper<UserSkuOrder> skuWrapper = new LambdaQueryWrapper<>();
-                skuWrapper.eq(UserSkuOrder::getActId, actId)
-                        .eq(UserSkuOrder::getUserId, userId)
+                skuWrapper.eq(UserSkuOrder::getUserId, userId)
                         .eq(UserSkuOrder::getSkuId, skuId)
                         .eq(UserSkuOrder::getDeleted, 0);
                 UserSkuOrder userSkuOrder = userSkuOrderMapper.selectOne(skuWrapper);
@@ -322,7 +318,6 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
                 } else {
                     // 创建新记录
                     UserSkuOrder newUserSkuOrder = new UserSkuOrder();
-                    newUserSkuOrder.setActId(actId);
                     newUserSkuOrder.setUserId(userId);
                     newUserSkuOrder.setSkuId(skuId);
                     newUserSkuOrder.setBuyNum(buyNum);
@@ -383,8 +378,7 @@ public class SeckillServiceDbOptimisticImpl implements SeckillService {
         redisHashUtil.clearHash(name);
         // 清空数据库中的数据
         LambdaQueryWrapper<UserSkuOrder> skuWrapper = new LambdaQueryWrapper<>();
-        skuWrapper.eq(UserSkuOrder::getActId, actId)
-                .eq(UserSkuOrder::getSkuId, skuId)
+        skuWrapper.eq(UserSkuOrder::getSkuId, skuId)
                 .eq(UserSkuOrder::getDeleted, 0);
         userSkuOrderMapper.delete(skuWrapper);
         LambdaQueryWrapper<UserActOrder> actWrapper = new LambdaQueryWrapper<>();

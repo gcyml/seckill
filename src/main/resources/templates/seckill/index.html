@@ -68,10 +68,11 @@
        }
 
         function clear_user_buy_amount() {
+            var url_param = "actid="+$("#actid").val()+"&skuid="+$("#skuid").val();
             $.ajax({
                 cache: true,
                 type: "GET",
-                url: "/seckill/clearUserBuyAmount",
+                url: "/seckill/clearUserBuyAmount?"+url_param,
                 data: {},
                 dataType: "json",
                 success: function (data) {

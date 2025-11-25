@@ -18,16 +18,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * @author seckill
  */
 @Controller
-@RequestMapping("/seckill")
-public class SecskillController {
+@RequestMapping("/seckill-all")
+public class SecskillAllController {
 
     @Resource
 
     private SeckillService seckillService;
 
-//    @Resource
-//    @Qualifier("seckillServiceDbOptimistic")
-//    private SeckillService seckillDbService;
+    @Resource
+    @Qualifier("seckillServiceDbOptimistic")
+    private SeckillService seckillDbService;
 
     @Resource
     private MQSender sender;
@@ -37,7 +37,7 @@ public class SecskillController {
      */
     @GetMapping("/index")
     public String index() {
-        return "seckill/index";
+        return "seckill/index3";
     }
 
     @GetMapping("/clearUserBuyAmount")
@@ -50,7 +50,7 @@ public class SecskillController {
         if (skuId.equals("")) {
             return new ServerResponseUtil(1,"sku id不可为空","");
         }
-        seckillService.clearUserBuyAmount(actId, skuId);
+        seckillDbService.clearUserBuyAmount(actId, skuId);
         return ServerResponseUtil.success("清除用户购买数量成功");
     }
 
@@ -71,7 +71,7 @@ public class SecskillController {
         if (amount<=0) {
             return new ServerResponseUtil(1,"sku库存必須大于0","");
         }
-
+        seckillDbService.skuAdd(actId,skuId,amount);
         boolean isSucc = seckillService.skuAdd(actId,skuId,amount);
         int status = 1;
         String msg = "";
@@ -137,18 +137,18 @@ public class SecskillController {
             status = 0;
         }
 
-//        if (status == 0) {
-//            //压入消息队列
-//            //入队
-//            SeckillMessage sm = new SeckillMessage();
-//            sm.setUserId(userId);
-//            sm.setActId(actId);
-//            sm.setSkuId(skuId);
-//            sm.setBuyNum(buyNum);
-//            sm.setPerSkuLim(perSkuLim);
-//            sm.setPerActLim(perActLim);
-//            sender.sendSeckillMessage(sm);
-//        }
+        if (status == 0) {
+            //压入消息队列
+            //入队
+            SeckillMessage sm = new SeckillMessage();
+            sm.setUserId(userId);
+            sm.setActId(actId);
+            sm.setSkuId(skuId);
+            sm.setBuyNum(buyNum);
+            sm.setPerSkuLim(perSkuLim);
+            sm.setPerActLim(perActLim);
+            sender.sendSeckillMessage(sm);
+        }
 
         ServerResponseUtil response = new ServerResponseUtil(status,msg,"");
         return response;
