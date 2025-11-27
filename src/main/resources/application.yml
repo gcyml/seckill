@@ -61,17 +61,18 @@ spring:
     # 发布确认配置
     publisher-confirm-type: correlated
     publisher-returns: true
-    # 消费者配置
+    # 消费者配置（优化后）
     listener:
       simple:
         # 确认模式：manual(手动确认)、auto(自动确认)、none(不确认)
+        # 使用手动确认，保证数据不丢失（处理成功后立即确认，性能影响很小）
         acknowledge-mode: manual
-        # 预取数量（每个消费者最多预取的消息数）
-        prefetch: 10
-        # 并发消费者数量
-        concurrency: 5
-        # 最大并发消费者数量
-        max-concurrency: 10
+        # 预取数量（每个消费者最多预取的消息数）- 增加以提高吞吐量
+        prefetch: 50
+        # 并发消费者数量 - 大幅增加以提高数据库处理能力
+        concurrency: 20
+        # 最大并发消费者数量 - 根据数据库连接池大小调整
+        max-concurrency: 50
         # 是否重试
         retry:
           enabled: true
